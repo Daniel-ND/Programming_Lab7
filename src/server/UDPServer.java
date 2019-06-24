@@ -255,8 +255,10 @@ public class UDPServer implements Runnable
 
                 //получили пакет
                 serverSocket.receive(requestPacket);
+                //System.out.println("адрес клиента " + requestPacket.getAddress() + " порт клиента "+ requestPacket.getPort());
                 //определили, что внутри
                 int clientPort = requestPacket.getPort();
+                //System.out.println(clientPort);
                 String clientMessage = new String(requestPacket.getData(), requestPacket.getOffset(), requestPacket.getLength());
                 System.out.println("Получен запрос: "+ clientMessage + " с клиентского порта: " + clientPort);
 
@@ -267,7 +269,7 @@ public class UDPServer implements Runnable
                         serverResponseMessage.getBytes(),
                         serverResponseMessage.getBytes().length,
                         requestPacket.getAddress(),
-                        clientPort
+                        requestPacket.getPort()
                 );
                 serverSocket.send(datagramResponsePacket);
             }

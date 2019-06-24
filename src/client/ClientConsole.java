@@ -12,13 +12,23 @@ import server.*;
 
 public class ClientConsole {
     public static void main(String[] args) {
-        if (args.length > 1 || args.length < 1){
-            System.out.println("Необходимо передать один аргумент командной строки - порт клиента");
+        if (args.length != 2){
+            System.out.println("Необходимо передать два аргумента командной строки - порт клиента и адрес сервера");
             return;
         }
-        int port = Integer.parseInt(args[0]);
-        System.out.println("Клиент с портом " + port);
-        UDPClient client = new UDPClient( port, 50000);
+        int port = 0;
+        try { port = Integer.parseInt(args[0]);}
+        catch (NumberFormatException e){
+            System.out.println("Порт должен быть задан числом");
+            return;
+        }
+        if (port == 50000){
+            System.out.println("Данный порт занят сервером");
+            return;
+        }
+        String adress = args[1];
+        //System.out.println("Клиент с портом " + port);
+        UDPClient client = new UDPClient( port, 50000, adress);
         Thread thread = new Thread(client);
         thread.start();
     }

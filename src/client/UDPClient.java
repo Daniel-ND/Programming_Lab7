@@ -9,11 +9,13 @@ import java.util.Scanner;
 public class UDPClient implements Runnable {
     private final int clientPort;
     private final int serverPort;
+    private String serverAdress;
     DatagramChannel channel;
 
-    UDPClient(int port, int serverPort) {
+    UDPClient(int port, int serverPort, String serverAdress) {
         this.clientPort = port;
         this.serverPort = serverPort;
+        this.serverAdress = serverAdress;
     }
 
     boolean send(){
@@ -38,6 +40,7 @@ public class UDPClient implements Runnable {
             //System.out.println("пытаюсь получить ответ");
             ByteBuffer inBuffer = ByteBuffer.allocate(1024);
             int ans = channel.read(inBuffer);
+            //System.out.println(ans + "))");
             //System.out.println("получил ответ");
             byte[] arr = inBuffer.array();
             String recievedMessage = new String(arr);
@@ -55,16 +58,23 @@ public class UDPClient implements Runnable {
 
     @Override
     public void run() {
-        ///здесь получаем сообщения с сервера
-        try {
-            SocketAddress address = new InetSocketAddress(50000);
-            this.channel = DatagramChannel.open();
-            channel.socket().bind(new InetSocketAddress(clientPort));
-            while (!channel.isConnected())
-                channel.connect(address);
-        } catch (IOException e) {
-            System.out.println("Не удаётся содать канал");
+      ///здесь получаем сообщения с сервера
+        InetAddress serverA;
+        try{serverA = InetAddress.getByName(serverAdress);}
+        catch (UnknownHostException e){
+            System.out.println("Не удаётся распознать хост");
             return;
+        }
+        try {
+           SocketAddress address = new InetSocketAddress(serverA, serverPort);
+           this.channel = DatagramChannel.open();
+            channel.socket().bind(new InetSocketAddress(clientPort));
+           while (!channel.isConnected())
+                channel.connect(address);
+           System.out.println("Клиент с портом " + clientPort + " запущен");
+        } catch (IOException e) {
+           System.out.println("Не удаётся содать канал. Порт клиента занят");
+           return;
         }
             Thread thread = new Thread(new Runnable() {
                 @Override
@@ -72,10 +82,14 @@ public class UDPClient implements Runnable {
                     boolean work = true;
                     while (true) {
                         //отправляем
+                        System.out.println("Отправляю");
                         work = send();
+                        System.out.println("Отправил");
                         if (work == false)
                             break;
+                        System.out.println("Сейчас получу ответ");
                         receive();
+                        System.out.println("Получил");
                     }
 
                 }

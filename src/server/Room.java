@@ -1,16 +1,25 @@
 package server;
+import java.time.Clock;
+import java.time.LocalDate;
+import java.time.LocalTime;
+import java.time.ZonedDateTime;
 
 import com.google.gson.*;
 public class Room implements Comparable<Room> {
+    String user = "";
     String name = "";
     Furniture [] furniture = new Furniture[10];
     int amount_of_furniture = 0;
     int area = 0;
+    ZonedDateTime time;
 
     Room(String _name, int _area){
         name = _name;
         area  = _area;
+        time = ZonedDateTime.now();
     }
+
+    void set_user (String _user){user = _user;}
 
     void Add_furniture(Furniture f){
         this.furniture[this.amount_of_furniture] = f;
@@ -35,6 +44,7 @@ public class Room implements Comparable<Room> {
     public String toString(){
         Gson gson = new Gson();
         String jsonString = gson.toJson(this);
+        jsonString = jsonString.replace(",null", "");
         return jsonString;
     }
 

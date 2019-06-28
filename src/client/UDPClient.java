@@ -1,5 +1,5 @@
 package client;
-
+import java.util.regex.*;
 import java.io.*;
 import java.net.*;
 import java.nio.ByteBuffer;
@@ -11,18 +11,67 @@ public class UDPClient implements Runnable {
     private final int serverPort;
     private String serverAdress;
     DatagramChannel channel;
+    String user = "";
 
     UDPClient(int port, int serverPort, String serverAdress) {
         this.clientPort = port;
         this.serverPort = serverPort;
         this.serverAdress = serverAdress;
     }
+    void send_auth(String message){
+        byte[] data = message.getBytes();
+        try{
+            channel.write(ByteBuffer.wrap(data));}
+        catch (IOException e) {
+            System.err.println("can't send package");
+        }
+    }
 
+    boolean receive_auth(){
+        String s1 = "Адрес задан некорректно";
+        String s2 = "Пароль неверный";
+        try{
+            ByteBuffer inBuffer = ByteBuffer.allocate(1024);
+            int ans = channel.read(inBuffer);
+            byte[] arr = inBuffer.array();
+            String receivedMessage = new String(arr).trim();
+            System.out.println("response from server:" + "\n" + receivedMessage);
+            if (receivedMessage.trim().equals(""))
+            if (ans == -1){
+                System.out.println("Не удаётся получить ответ от сервера :(");
+                System.exit(1);
+            }
+            if (receivedMessage.equals(s1) || receivedMessage.equals(s2)) System.exit(1);
+            else
+                return true;
+        }
+        catch (Exception e) {
+            System.out.println("Не удаётся получить ответ от сервера :(");
+            System.exit(1);
+        }
+        return false;
+    }
+
+    void auth(){
+        Scanner in = new Scanner(System.in);
+        System.out.println("Введите адрес электронной почты с целью дальнейшей регистрации или авторизации");
+        String login = in.nextLine();
+        send_auth("check_login " + login);
+        if (receive_auth()){
+            System.out.println("Введите пароль");
+            send_auth("check_password "+ login +" " + in.nextLine());
+            if (receive_auth()){
+                user = login;
+                System.out.println("Вы успешно авторизованы");
+            }
+            else{System.exit(1);}
+        }
+    }
     boolean send(){
         String requestMessage;
 
         Scanner in = new Scanner(System.in);
-        requestMessage = in.nextLine();
+        requestMessage =  in.nextLine() + " " + user;
         if (requestMessage.equals("exit"))
             return false;
         byte[] data = requestMessage.getBytes();
@@ -37,22 +86,20 @@ public class UDPClient implements Runnable {
 
     void receive(){
         try{
-            //System.out.println("пытаюсь получить ответ");
             ByteBuffer inBuffer = ByteBuffer.allocate(1024);
             int ans = channel.read(inBuffer);
-            //System.out.println(ans + "))");
-            //System.out.println("получил ответ");
             byte[] arr = inBuffer.array();
             String recievedMessage = new String(arr);
-            //System.out.println("пытаюсь вывести что-то разумное");
             System.out.println("response from server:" + "\n" + recievedMessage.trim());
 
-            if (ans == -1)
+            if (ans == -1){
                 System.out.println("Не удаётся получить ответ от сервера :(");
-
+                System.exit(1);
+            }
         }
         catch (Exception e) {
         System.out.println("Не удаётся получить ответ от сервера :(");
+        System.exit(1);
         }
     }
 
@@ -79,17 +126,14 @@ public class UDPClient implements Runnable {
             Thread thread = new Thread(new Runnable() {
                 @Override
                 public void run() {
+                    auth();
                     boolean work = true;
                     while (true) {
                         //отправляем
-                        System.out.println("Отправляю");
                         work = send();
-                        System.out.println("Отправил");
                         if (work == false)
                             break;
-                        System.out.println("Сейчас получу ответ");
                         receive();
-                        System.out.println("Получил");
                     }
 
                 }

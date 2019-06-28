@@ -44,10 +44,11 @@ public class UDPServer implements Runnable
         return "Неверно задан json";
     }
 
-    String processing_request (String request, MyLinkedHashSet hset){
+    String processing_request (String request, MyLinkedHashSet hset, HashSetRepository repository, Authorisation auth){
         String answer = "";
         String [] line = request.split(" ");
-        if (line.length > 2){
+        if (line.length > 3){
+            System.out.println("Здесь 1");
             return wrong_input();
         }
         String command = "";
@@ -56,20 +57,15 @@ public class UDPServer implements Runnable
         command = line[0];
         switch (command){
             case ("remove"):
-                if(line.length == 2) {
+                if(line.length == 3) {
                     String s = line[1];
                     try {
                         room = gson.fromJson(s, Room.class);
+                        room.set_user(line[2]);
                         if (room.area == 0)
                             return wrong_json();
                         else{
-                            int cnt = hset.getSet().size();
-                            hset.remove(room);
-                            save(hset);
-                            if (cnt != hset.getSet().size())
-                                return ("Элемент удалён из коллекции");
-                            else
-                                return ("Элемент не удалось удалить из коллекции");
+                            return repository.remove(room);
                         }
                     }
                     catch (RuntimeException e) {
@@ -78,29 +74,24 @@ public class UDPServer implements Runnable
                 }
                 else return wrong_input();
             case ("show"):
-                if (line.length > 1) return wrong_input();
+                if (line.length > 2) return wrong_input();
                 else {
-                    save(hset);
-                    String ans = hset.show();
+                    String ans = repository.show();
                     if (ans.isEmpty())
                         return "Коллекция пустая\n";
                     return ans;
                 }
             case("add_if_min"):
-                if(line.length == 2) {
+                if(line.length == 3) {
                     String s = line[1];
                     try {
                         room = gson.fromJson(s, Room.class);
+                        room.set_user(line[2]);
                         if (room.area == 0)
                             return wrong_json();
                         else{
-                            int cnt = hset.getSet().size();
-                            hset.add_if_min(room);
-                            save(hset);
-                            if (cnt != hset.getSet().size())
-                                return ("Элемент добавлен в коллекцию");
-                            else
-                                return ("Элемент не удалось добавить в коллекцию");
+
+                            return repository.add_if_min(room);
                         }
                     }
                     catch (RuntimeException e) {
@@ -110,22 +101,17 @@ public class UDPServer implements Runnable
                 else return wrong_input();
 
             case("remove_greater"):
-                if(line.length == 2) {
+                if(line.length == 3) {
                     String s = line[1];
                     try {
                         room = gson.fromJson(s, Room.class);
+                        room.set_user(line[2]);
                         if (room.area == 0) {
                             //System.out.println("here! (1)");
                             return wrong_json();
                         }
                         else{
-                            int cnt = hset.getSet().size();
-                            hset.remove_greater(room);
-                            save(hset);
-                            if (cnt != hset.getSet().size())
-                                return ("Элементы удалены");
-                            else
-                                return ("В коллекции не оказалось элементов больше заданного");
+                            return repository.remove_greater(room);
                         }
 
                     }
@@ -136,31 +122,21 @@ public class UDPServer implements Runnable
                     }
                 }
                 else return wrong_input();
-            case("info"):
-                if (line.length > 1) return wrong_input();
-                else
-                return hset.info();
             case("clear"):
-                if (line.length > 1) return wrong_input();
-                else {hset.clear();
-                save(hset);
-                return "Из коллекции удалены все элементы";
-
+                if (line.length > 2) return wrong_input();
+                else {
+                    return repository.clear();
                 }
             case("add"):
-                if(line.length == 2) {
+                if(line.length == 3) {
                     String s = line[1];
                     try {
                         room = gson.fromJson(s, Room.class);
+                        room.set_user(line[2]);
                         if (room.area == 0)
                             return wrong_json();
                         else{
-                            int cnt = hset.getSet().size();
-                            hset.add(room);
-                            save(hset);
-                            if (cnt != hset.getSet().size())
-                                return "Элемент добавлен в коллекцию";
-                            return ("Элемент не удалось добавить в коллекцию");
+                            return repository.add(room);
                         }
 
                     }
@@ -169,23 +145,24 @@ public class UDPServer implements Runnable
                     }
                 }
                 else
-                    save(hset);
+                    System.out.println("Здесь 2");
                     return wrong_input();
             case("help"):
-                if (line.length > 1) return wrong_input();
+                if (line.length > 2) return wrong_input();
                 else {String ans ="Поддерживаются команды";
                      ans  = ans +  "remove {element}: удалить элемент из коллекции по его значению\n" +
                             "show: вывести в стандартный поток вывода все элементы коллекции в строковом представлении\n" +
                             "add_if_min {element}: добавить новый элемент в коллекцию, если его значение меньше, чем у наименьшего элемента этой коллекции\n" +
                             "remove_greater {element}: удалить из коллекции все элементы, превышающие заданный\n" +
-                            "info: вывести в стандартный поток вывода информацию о коллекции (тип, дата инициализации, количество элементов и т.д.)\n" +
                             "clear: очистить коллекцию\n" +
                             "add {element}: добавить новый элемент в коллекцию\n"+"exit: выход из программы";
                     return ans;}
-            case("exit"):
-                if (line.length > 1) return wrong_input();
-                save(hset);
-                /// придумать, как завершить работу с клиентом
+            case("check_login"):
+                if (line.length != 2) return wrong_input();
+                else return auth.check_login(line[1]);
+            case("check_password"):
+                if (line.length != 3) return wrong_input();
+                else return auth.check_password(line[1], line[2]);
             default:
                 return wrong_input();
         }
@@ -198,6 +175,20 @@ public class UDPServer implements Runnable
         // обработка файла с коллекцией
         File file = new File("input.txt");
         MyLinkedHashSet hset = new MyLinkedHashSet();
+        //HashSetRepository repository = new HashSetRepository("daniel", "airplane", "jdbc:postgresql://localhost:5432/server_database");
+        HashSetRepository repository = new HashSetRepository();
+        Authorisation auth = new Authorisation();
+
+        //пытаемся установить соединение с бд
+        if(repository.connection() == true){
+            System.out.println("Соединение с БД установлено");
+        }
+        else System.out.println("Соединение с БД установить не удалось");
+
+        if(auth.connection() == true){
+            System.out.println("Соединение с БД установлено");
+        }
+        else System.out.println("Соединение с БД установить не удалось");
 
         String msg = "";
         try {
@@ -263,7 +254,7 @@ public class UDPServer implements Runnable
                 System.out.println("Получен запрос: "+ clientMessage + " с клиентского порта: " + clientPort);
 
                 //формируем ответ
-                String serverResponseMessage = processing_request(clientMessage, hset);
+                String serverResponseMessage = processing_request(clientMessage, hset, repository, auth);
                 //System.out.println(serverResponseMessage);
                 DatagramPacket datagramResponsePacket = new DatagramPacket(
                         serverResponseMessage.getBytes(),

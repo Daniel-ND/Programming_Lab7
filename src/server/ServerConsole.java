@@ -8,6 +8,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 public class ServerConsole {
+    public static final int serverPort = 50000;
     public static void main(String[] args) {
         UDPServer server = new UDPServer(50000);
         System.out.println("Сервер запустился и принимает сообщения");

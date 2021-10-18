@@ -13,47 +13,47 @@ public class Authorisation {
     String password = "qwh669";
     String URL = "jdbc:postgresql://pg/studs";
 
-    Authorisation(){}
+    Authorisation() {
+    }
 
-    boolean connection (){
+    boolean connection() {
         try {
             Class.forName("org.postgresql.Driver");
         } catch (ClassNotFoundException e) {
             e.printStackTrace();
         }
-        try (Connection connection = DriverManager.getConnection(URL, username, password);){
+        try (Connection connection = DriverManager.getConnection(URL, username, password);) {
             Statement statement = connection.createStatement();
             statement.executeUpdate("CREATE TABLE IF NOT EXISTS users (login text, hash_code text)");
-        }
-        catch (SQLException e){
+        } catch (SQLException e) {
             return false;
         }
         return true;
     }
-    private synchronized String sha1 (String login){
+
+    private synchronized String sha1(String login) {
         try {
             MessageDigest digest = MessageDigest.getInstance("SHA-1");
             digest.reset();
             digest.update(login.getBytes("utf8"));
             return String.format("%040x", new BigInteger(1, digest.digest()));
-        } catch (Exception e){
+        } catch (Exception e) {
             return "0";
-            //e.printStackTrace();
         }
 
     }
+
     public static String generatePassword(int length) {
         String characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
         Random rng = new Random();
         char[] text = new char[length];
-        for (int i = 0; i < length; i++)
-        {
+        for (int i = 0; i < length; i++) {
             text[i] = characters.charAt(rng.nextInt(characters.length()));
         }
         return new String(text);
     }
 
-    private synchronized boolean registration(String login){
+    private synchronized boolean registration(String login) {
         try (Connection connection = DriverManager.getConnection(URL, username, password);) {
             String password = generatePassword(5);
             String hash = sha1(password);
@@ -64,43 +64,39 @@ public class Authorisation {
             st.executeUpdate();
             boolean ind = EmailSender.send(login, password);
             return ind;
-        }
-        catch (SQLException e){
+        } catch (SQLException e) {
             return false;
         }
     }
 
-    String check_password(String login, String pas){
-        try (Connection connection = DriverManager.getConnection(URL, username, password);){
+    String check_password(String login, String pas) {
+        try (Connection connection = DriverManager.getConnection(URL, username, password);) {
             String hash1 = sha1(pas);
             String hash2 = "";
-            String sql = "select * from users where login='"+login+"'";
+            String sql = "select * from users where login='" + login + "'";
             ResultSet rs = connection.createStatement().executeQuery(sql);
-            if(rs.next()){
+            if (rs.next()) {
                 hash2 = rs.getString("hash_code");
             }
             if (hash1.equals(hash2)) return "Пароль верный";
-        }
-        catch (SQLException e){
+        } catch (SQLException e) {
             return "Неудача";
         }
         return "Пароль неверный";
     }
 
-    String check_login(String login){
-
+    String check_login(String login) {
         try (Connection connection = DriverManager.getConnection(URL, username, password);) {
-                String sql = "select * from users where login='"+login+"'";
-                ResultSet rs = connection.createStatement().executeQuery(sql);
-                if (rs.next()) return "Адрес есть в базе данных";
-                else{
-                    if (registration(login))
-                        return "Пользователь успешно зарегистрирован. Пароль был отправлен по адресу " + login;
-                }
-                return "Адрес задан некорректно";
+            String sql = "select * from users where login='" + login + "'";
+            ResultSet rs = connection.createStatement().executeQuery(sql);
+            if (rs.next()) return "Адрес есть в базе данных";
+            else {
+                if (registration(login))
+                    return "Пользователь успешно зарегистрирован. Пароль был отправлен по адресу " + login;
+            }
+            return "Адрес задан некорректно";
 
-        }
-        catch (SQLException e){
+        } catch (SQLException e) {
             return "Неудача";
         }
     }

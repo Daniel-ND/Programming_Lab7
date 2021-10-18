@@ -1,47 +1,67 @@
 package server;
-import java.time.Clock;
-import java.time.LocalDate;
-import java.time.LocalTime;
-import java.time.ZonedDateTime;
 
 import com.google.gson.*;
-public class Room implements Comparable<Room> {
-    String user = "";
-    String name = "";
-    Furniture [] furniture = new Furniture[10];
-    int amount_of_furniture = 0;
-    int area = 0;
-    ZonedDateTime time;
 
-    Room(String _name, int _area){
+import java.time.ZonedDateTime;
+import java.util.ArrayList;
+
+public class Room implements Comparable<Room> {
+    private String user;
+    private String name;
+    private ArrayList<Furniture> furniture;
+    private int area = 0;
+    private ZonedDateTime time;
+
+    Room(String _name, int _area) {
         name = _name;
-        area  = _area;
+        area = _area;
         time = ZonedDateTime.now();
+        furniture = new ArrayList<>();
     }
 
-    void set_user (String _user){user = _user;}
+    protected void setUser(String _user) {
+        user = _user;
+    }
 
-    void Add_furniture(Furniture f){
-        this.furniture[this.amount_of_furniture] = f;
-        this.amount_of_furniture = this.amount_of_furniture + 1;
+    public void Add_furniture(Furniture f) {
+        furniture.add(f);
+    }
+
+    public int getAmountOfFurniture() {
+        return furniture.size();
+    }
+
+    public ArrayList<Furniture> getFurniture() {
+        return furniture;
+    }
+
+    public int getArea() {
+        return area;
+    }
+
+    public String getUser() {
+        return user;
+    }
+
+    public String getName() {
+        return name;
     }
 
     @Override
-    public int compareTo(Room a_) {
-        Room a = (Room) a_;
-        if (this.area > a.area)
+    public int compareTo(Room a) {
+        if (area > a.getArea())
             return 1;
-        else if (this.area < a.area)
+        else if (this.area < a.getArea())
             return -1;
-        else
-        if(this.amount_of_furniture < a.amount_of_furniture)
+        else if (furniture.size() < a.getAmountOfFurniture())
             return 1;
-        else if (this.amount_of_furniture > a.amount_of_furniture)
+        else if (furniture.size() > a.getAmountOfFurniture())
             return -1;
         else return 0;
     }
+
     @Override
-    public String toString(){
+    public String toString() {
         Gson gson = new Gson();
         String jsonString = gson.toJson(this);
         jsonString = jsonString.replace(",null", "");
@@ -49,26 +69,26 @@ public class Room implements Comparable<Room> {
     }
 
     @Override
-    public int hashCode(){
-        int res = 10 * area + 100 * amount_of_furniture + name.hashCode() * 1000;
+    public int hashCode() {
+        int res = 10 * area + 100 * furniture.size() + name.hashCode() * 1000;
         int c = 1000;
-        for (int i = 0; i < amount_of_furniture; ++i){
+        for (int i = 0; i < furniture.size(); ++i) {
             c *= 10;
-            res += furniture[i].cost * c;
+            res += furniture.get(i).getCost() * c;
         }
         return res;
     }
 
     @Override
-    public boolean equals(Object a_){
-        Room a =  (Room) a_;
-        if (this.area == a.area && this.amount_of_furniture == a.amount_of_furniture){
+    public boolean equals(Object a_) {
+        Room a = (Room) a_;
+        if (area == a.getArea() && furniture.size() == a.getAmountOfFurniture()) {
             int sum1 = 0, sum2 = 0;
-            for(int i = 0; i < amount_of_furniture; ++i){
-                sum1 += this.furniture[i].cost;
-                sum2 += this.furniture[i].cost;
+            for (int i = 0; i < furniture.size(); ++i) {
+                sum1 += furniture.get(i).getCost();
+                sum2 += a.getFurniture().get(i).getCost();
             }
-            if (sum1 == sum2) return true;
+            return sum1 == sum2;
         }
         return false;
     }

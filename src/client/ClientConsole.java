@@ -1,34 +1,25 @@
-
 package client;
 
-import java.io.*;
-import java.net.*;
-import java.util.concurrent.Executor;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-
-import server.*;
-
+import Exceptions.IncorrectArgsException;
+import server.ServerConsole;
 
 public class ClientConsole {
-    public static void main(String[] args) {
-        if (args.length != 2){
-            System.out.println("Необходимо передать два аргумента командной строки - порт клиента и адрес сервера");
-            return;
-        }
+    private static final int serverPort = 50000;
+
+    public static void main(String[] args) throws IncorrectArgsException {
+        if (args.length != 2)
+            throw new IncorrectArgsException("Необходимо передать два аргумента командной строки - порт клиента и адрес сервера");
         int port = 0;
-        try { port = Integer.parseInt(args[0]);}
-        catch (NumberFormatException e){
-            System.out.println("Порт должен быть задан числом");
-            return;
+        try {
+            port = Integer.parseInt(args[0]);
+        } catch (NumberFormatException e) {
+            throw new IncorrectArgsException("Порт должен быть задан числом");
         }
-        if (port == 50000){
-            System.out.println("Данный порт занят сервером");
-            return;
+        if (port == ServerConsole.serverPort) {
+            throw new IncorrectArgsException("Данный порт занят сервером");
         }
-        String adress = args[1];
-        //System.out.println("Клиент с портом " + port);
-        UDPClient client = new UDPClient( port, 50000, adress);
+        String serverAddress = args[1];
+        UDPClient client = new UDPClient(port, serverPort, serverAddress);
         Thread thread = new Thread(client);
         thread.start();
     }

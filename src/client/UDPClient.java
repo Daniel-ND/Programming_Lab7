@@ -1,5 +1,4 @@
 package client;
-import java.util.regex.*;
 import java.io.*;
 import java.net.*;
 import java.nio.ByteBuffer;
@@ -9,14 +8,14 @@ import java.util.Scanner;
 public class UDPClient implements Runnable {
     private final int clientPort;
     private final int serverPort;
-    private String serverAdress;
+    private String serverAddress;
     DatagramChannel channel;
     String user = "";
 
     UDPClient(int port, int serverPort, String serverAdress) {
         this.clientPort = port;
         this.serverPort = serverPort;
-        this.serverAdress = serverAdress;
+        this.serverAddress = serverAdress;
     }
     void send_auth(String message){
         byte[] data = message.getBytes();
@@ -81,7 +80,6 @@ public class UDPClient implements Runnable {
             System.err.println("can't send package");
         }
         return true;
-        //DatagramPacket datagramRequestPacket = new DatagramPacket(data, data.length, InetAddress.getLocalHost(), serverPort);
     }
 
     void receive(){
@@ -107,7 +105,7 @@ public class UDPClient implements Runnable {
     public void run() {
       ///здесь получаем сообщения с сервера
         InetAddress serverA;
-        try{serverA = InetAddress.getByName(serverAdress);}
+        try{serverA = InetAddress.getByName(serverAddress);}
         catch (UnknownHostException e){
             System.out.println("Не удаётся распознать хост");
             return;
@@ -127,11 +125,10 @@ public class UDPClient implements Runnable {
                 @Override
                 public void run() {
                     auth();
-                    boolean work = true;
                     while (true) {
                         //отправляем
-                        work = send();
-                        if (work == false)
+                        boolean work = send();
+                        if (!work)
                             break;
                         receive();
                     }
